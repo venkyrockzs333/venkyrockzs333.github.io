@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Venkateshwarlu Boda | Software Test Engineer</title>
+  <meta name="description" content="Venkateshwarlu Boda, Software Test Engineer at Wipro in Hyderabad, India. Windows feature validation, manual testing, test case design and regression testing." />
+  <meta name="theme-color" content="#EAE6E1" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-weight='900' font-size='28' fill='%23B250FF'%3EVB%3C/text%3E%3C/svg%3E" />
+  <link rel="preload" href="fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="vendor/lenis.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#home" data-scroll>Home</a>
+      <a href="#experience" data-scroll>Experience</a>
+      <a href="#skills" data-scroll>Skills</a>
+      <a href="#contact" data-scroll>Contact</a>
+    </nav>
+    <a class="logo" href="#home" data-scroll aria-label="Venkatesh, back to top">VENKATESH</a>
+    <div class="nav-icons">
+      <a href="https://www.linkedin.com/in/venkateshwarlu-boda-901b50270/" target="_blank" rel="noopener" aria-label="LinkedIn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+      </a>
+      <a href="mailto:venkateshwarluboda1806@gmail.com" aria-label="Email">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 0. HERO (beige) -->
+    <section class="sec hero light" id="home" data-pose="hero">
+      <div class="hero-left reveal" data-from="left">
+        <p class="label">Software Test Engineer</p>
+        <h1 class="h-stack hero-name"><span class="xb">Venkateshwarlu</span><span class="th">Boda</span></h1>
+        <p class="tagline">Most bugs don't get caught because no one looked closely enough. <strong>I look closely.</strong></p>
+        <p class="loc"><span class="dot"></span>Hyderabad, India</p>
+      </div>
+      <a class="scroll-cue" href="#about" data-scroll>
+        <span>Scroll Down</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v16m0 0-6-6m6 6 6-6"/></svg>
+      </a>
+    </section>
+
+    <!-- 1. ABOUT (beige) -->
+    <section class="sec light side-left" id="about" data-pose="about">
+      <div class="block reveal" data-from="left">
+        <h2 class="h-stack"><span class="xb">Sharp</span><span class="th">Eyes</span></h2>
+        <p class="copy">I'm a Software Test Engineer at Wipro, validating Windows features on real-time client projects. I write test cases, dig into edge cases, log defects with clear reproduction steps, and retest fixes until a release is ready to ship.</p>
+      </div>
+    </section>
+
+    <!-- 2. DEVELOPER ROOTS (beige) -->
+    <section class="sec light side-right" id="roots" data-pose="roots">
+      <div class="block reveal" data-from="right">
+        <h2 class="h-stack"><span class="xb">Developer</span><span class="th">Roots</span></h2>
+        <p class="copy">I trained as a full-stack developer in Python and Java, so I understand how code breaks, not just that it does.</p>
+      </div>
+    </section>
+
+    <!-- 3. STATS (dark) -->
+    <section class="sec dark stats" id="stats" data-pose="stats">
+      <div class="stats-head reveal" data-from="up">
+        <h2 class="h-stack small"><span class="xb">Core</span><span class="th">Specs</span></h2>
+      </div>
+      <div class="stats-grid">
+        <div class="stat reveal" data-from="left"><p class="label">Experience</p><p class="value">1.7 yrs</p></div>
+        <div class="stat reveal" data-from="left"><p class="label">Focus</p><p class="value">Windows QA</p></div>
+        <div class="stat right reveal" data-from="right"><p class="label">Stack</p><p class="value">Python · Java · SQL</p></div>
+      </div>
+    </section>
+
+    <!-- 4. EXPERIENCE (dark) -->
+    <section class="sec dark side-left exp" id="experience" data-pose="experience">
+      <div class="block wide">
+        <h2 class="h-stack reveal" data-from="left"><span class="xb">Work</span><span class="th">Experience</span></h2>
+        <ol class="timeline">
+          <li class="job reveal" data-from="left">
+            <p class="label">Mar 2025 – Present · Hyderabad · Hybrid</p>
+            <h3>Project Engineer <span>Wipro</span></h3>
+            <ul>
+              <li>Design and execute manual test cases, including edge cases</li>
+              <li>Log defects with clear reproduction steps and expected vs actual results</li>
+              <li>Work with developers to retest fixes and run regression checks before releases</li>
+              <li>Validate builds for release readiness</li>
+            </ul>
+          </li>
+          <li class="job reveal" data-from="left">
+            <p class="label">Dec 2024 – Mar 2025 · Remote</p>
+            <h3>Software Engineer Intern <span>RPS Consulting</span></h3>
+            <ul><li>Python full-stack training and project work</li></ul>
+          </li>
+          <li class="job reveal" data-from="left">
+            <p class="label">Jul 2024 – Sep 2024 · On-site</p>
+            <h3>Software Trainee Engineer <span>Trisun Technologies</span></h3>
+            <ul><li>Built and tested full-stack features in Java</li></ul>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 5. SKILLS (dark) -->
+    <section class="sec dark side-right" id="skills" data-pose="skills">
+      <div class="block">
+        <h2 class="h-stack reveal" data-from="right"><span class="xb">Tool</span><span class="th">Kit</span></h2>
+        <ul class="chips reveal" data-from="right">
+          <li>Manual Testing</li><li>Test Case Design</li><li>Regression Testing</li><li>STLC</li>
+          <li>Bug Reporting</li><li>Windows Feature Validation</li><li>Debugging</li><li>Unit Testing</li>
+          <li>Python</li><li>Java</li><li>MySQL</li><li>Full-Stack Development</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 6. NOW LEARNING (deep violet + beam) -->
+    <section class="sec dark side-left" id="learning" data-pose="learning">
+      <div class="block reveal" data-from="left">
+        <p class="label">Working toward</p>
+        <h2 class="h-stack"><span class="xb">Now</span><span class="th">Learning</span></h2>
+        <p class="copy">Cybersecurity. I'm working toward ISC2 Certified in Cybersecurity (CC), the SOC Level 1 path and CompTIA Security+.</p>
+        <ul class="path">
+          <li><span>01</span>ISC2 CC</li>
+          <li><span>02</span>SOC Level 1 path</li>
+          <li><span>03</span>CompTIA Security+</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7. EDUCATION + CONTACT (dark) -->
+    <section class="sec dark side-left contact" id="contact" data-pose="contact">
+      <div class="block">
+        <div class="edu reveal" data-from="left">
+          <p class="label">Education</p>
+          <p class="value">St. Martin's Engineering College</p>
+          <p class="copy" style="margin-top:.35em;opacity:.75">Electrical &amp; Electronics Engineering · 2019–2022</p>
+        </div>
+        <h2 class="h-stack reveal" data-from="left"><span class="xb">Let's</span><span class="th">Talk</span></h2>
+        <p class="copy reveal" data-from="left">Open to Windows feature testing and QA roles, especially in the Microsoft ecosystem. Based in Hyderabad, on-site or hybrid.</p>
+        <div class="cta reveal" data-from="left">
+          <a class="btn primary" href="https://www.linkedin.com/in/venkateshwarlu-boda-901b50270/" target="_blank" rel="noopener">Connect on LinkedIn <span aria-hidden="true">↗</span></a>
+          <a class="btn ghost" href="mailto:venkateshwarluboda1806@gmail.com">venkateshwarluboda1806@gmail.com</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© 2026 Venkateshwarlu Boda</span>
+    <span class="muted">Hyderabad, India</span>
+  </footer>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script src="vendor/ScrollTrigger.min.js"></script>
+  <script src="vendor/lenis.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
