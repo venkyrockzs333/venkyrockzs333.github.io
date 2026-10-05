@@ -696,24 +696,6 @@ function experience() {
   document.querySelectorAll('[data-exp-duration]').forEach((el) => (el.textContent = long));
 }
 
-// resume PDF: if it isn't uploaded yet, don't send people to a 404
-const toastEl = document.getElementById('toast'); let toastT;
-function toast(msg) {
-  toastEl.textContent = msg; toastEl.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 3600);
-}
-async function checkResume() {
-  const links = [...document.querySelectorAll('[data-resume]')]; if (!links.length) return;
-  let ok = false;
-  try { const r = await fetch(links[0].getAttribute('href'), { method: 'HEAD', cache: 'no-store' }); ok = r.ok; } catch (e) { ok = false; }
-  if (ok) return;
-  links.forEach((a) => {
-    a.classList.add('is-pending'); a.setAttribute('aria-disabled', 'true'); a.removeAttribute('download');
-    a.title = 'Resume PDF coming soon. Please use LinkedIn for now.';
-    a.addEventListener('click', (e) => { e.preventDefault(); toast('The resume PDF is coming soon. Meanwhile, my full profile is on LinkedIn.'); });
-  });
-}
-
 // hamburger menu
 const burger = document.getElementById('burger'), menu = document.getElementById('menu');
 function setMenu(open) {
@@ -772,7 +754,6 @@ async function boot() {
   ScrollTrigger.refresh();
   buildReveals();
   heroIntro();
-  checkResume();
   lastH = document.documentElement.scrollHeight;
   if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(document.getElementById('main'));
   document.querySelectorAll('details').forEach((d) => d.addEventListener('toggle', relayout));
