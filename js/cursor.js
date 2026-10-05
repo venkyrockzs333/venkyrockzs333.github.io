@@ -1,13 +1,13 @@
 /* Custom cursor + hover/press zoom.
- * Fine pointers only; off on touch, with prefers-reduced-motion, and in ?record capture mode.
+ * Mouse pointers only; off on touch-only devices and in ?record capture mode.
  * Uses gsap (global) quickTo so everything runs on the shared GSAP ticker (no extra rAF loop).
  */
 const { gsap } = window;
-const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+const fine = matchMedia('(any-hover: hover) and (any-pointer: fine)').matches || matchMedia('(pointer: fine)').matches;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const record = new URLSearchParams(location.search).has('record');
 
-if (gsap && fine && !reduced && !record) initCursor();
+if (gsap && fine && !record) initCursor();
 
 function initCursor() {
   const root = document.documentElement;
