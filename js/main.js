@@ -17,8 +17,8 @@ ScrollTrigger.config({ ignoreMobileResize: true });
 const params = new URLSearchParams(location.search);
 const RECORD = params.has('record');
 const REDUCED = !RECORD && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isMobile = () => innerWidth <= 760;
-const LOW = params.has('low') || isMobile() || matchMedia('(pointer: coarse)').matches;
+const isMobile = () => innerWidth <= 900; // stacked layout: model above text
+const LOW = params.has('low') || innerWidth <= 900 || matchMedia('(pointer: coarse)').matches;
 const TAU = Math.PI * 2;
 const PURPLE = new THREE.Color('#B250FF');
 const VIOLET = new THREE.Color('#8B5CF6');
@@ -167,57 +167,93 @@ updateKeys(0);
 const lidPivot = new THREE.Group(); lidPivot.position.set(0, 0.11, -1.08); inner.add(lidPivot);
 const lidShell = new THREE.Mesh(new RoundedBoxGeometry(3.2, 0.09, 2.2, 4, 0.044), matBody); lidShell.position.set(0, 0.046, 1.08); lidPivot.add(lidShell);
 
-// code screen texture (typed in over time)
-const CODE = [
-  [['import', '#c792ea'], [' pytest', '#e6e1f0']],
-  [],
-  [['@pytest.mark.', '#7f7a8c'], ['regression', '#B250FF']],
-  [['def ', '#c792ea'], ['test_feature_edge_cases', '#82aaff'], ['(build):', '#e6e1f0']],
-  [['    for ', '#c792ea'], ['case ', '#e6e1f0'], ['in ', '#c792ea'], ['build.edge_cases():', '#e6e1f0']],
-  [['        result ', '#e6e1f0'], ['= ', '#89ddff'], ['build.run(case)', '#e6e1f0']],
-  [['        assert ', '#c792ea'], ['result.actual ', '#e6e1f0'], ['== ', '#89ddff'], ['case.expected', '#e6e1f0']],
-  [],
-  [['$ ', '#B250FF'], ['pytest -m regression', '#e6e1f0']],
-  [['..........................', '#7ee787'], ['F', '#ff6b8b'], ['...', '#7ee787']],
-  [['FAILED ', '#ff6b8b'], ['test_feature_edge_cases', '#e6e1f0']],
-  [['> defect logged with repro steps', '#B250FF']],
-];
-const TOTAL_CHARS = CODE.reduce((n, l) => n + l.reduce((m, s) => m + s[0].length, 0) + 1, 0);
-const codeCanvas = document.createElement('canvas'); codeCanvas.width = 1024; codeCanvas.height = 672;
-const cctx = codeCanvas.getContext('2d');
-const codeTex = new THREE.CanvasTexture(codeCanvas); codeTex.colorSpace = THREE.SRGBColorSpace; codeTex.anisotropy = 8;
-let lastCodeKey = '';
-function drawCode(t) {
-  const cycle = TOTAL_CHARS + 90;
-  const chars = Math.floor((t * 30) % cycle);
+// laptop screen: one "state" per section, typed in when the state changes
+const C = { kw: '#c792ea', tx: '#e6e1f0', dim: '#7f7a8c', pu: '#B250FF', ok: '#7ee787', bad: '#ff6b8b', fn: '#82aaff', op: '#89ddff' };
+const SCREENS = {
+  env: { title: 'test_env.yaml', lines: [
+    [['# test environment', C.dim]],
+    [['target:    ', C.fn], ['Windows feature build', C.tx]],
+    [['suite:     ', C.fn], ['feature_validation', C.tx]],
+    [['scope:     ', C.fn], ['functional · edge · negative', C.tx]],
+    [['report:    ', C.fn], ['repro steps · expected vs actual', C.tx]],
+    [['gate:      ', C.fn], ['release readiness', C.tx]],
+    [],
+    [['$ ', C.pu], ['start session --suite feature_validation', C.tx]],
+    [['> environment ready', C.ok]],
+  ] },
+  exec: { title: 'test_run.log', lines: [
+    [['$ ', C.pu], ['run suite feature_validation', C.tx]],
+    [['TC-01 ', C.dim], ['launch & defaults ......... ', C.tx], ['PASS', C.ok]],
+    [['TC-02 ', C.dim], ['settings persist .......... ', C.tx], ['PASS', C.ok]],
+    [['TC-03 ', C.dim], ['edge: empty input ......... ', C.tx], ['PASS', C.ok]],
+    [['TC-04 ', C.dim], ['negative: invalid value ... ', C.tx], ['FAIL', C.bad]],
+    [['      > defect logged, repro steps attached', C.pu]],
+    [['TC-05 ', C.dim], ['regression: core flow ..... ', C.tx], ['PASS', C.ok]],
+    [['RETEST ', C.dim], ['TC-04 after fix ......... ', C.tx], ['PASS', C.ok]],
+    [['build status: ', C.tx], ['release ready', C.ok]],
+  ] },
+  crm: { title: 'crm_validation.md', lines: [
+    [['# CRM · how to validate it', C.dim]],
+    [['functional  ', C.fn], ['every route and screen', C.tx]],
+    [['forms       ', C.fn], ['required fields, formats', C.tx]],
+    [['crud        ', C.fn], ['create > read > update > delete', C.tx]],
+    [['boundary    ', C.fn], ['empty / max-length values', C.tx]],
+    [['negative    ', C.fn], ['invalid input rejected', C.tx]],
+    [['database    ', C.fn], ['UI matches MySQL records', C.tx]],
+    [],
+    [['Frontend ', C.tx], ['> ', C.pu], ['Flask ', C.tx], ['> ', C.pu], ['SQLAlchemy ', C.tx], ['> ', C.pu], ['MySQL', C.tx]],
+  ] },
+  lifecycle: { title: 'test_lifecycle', steps: ['Requirement', 'Test Scenario', 'Test Case', 'Execution', 'Defect Reporting', 'Retesting', 'Regression', 'Release Validation'] },
+};
+const screenCanvas = document.createElement('canvas'); screenCanvas.width = 1024; screenCanvas.height = 672;
+const cctx = screenCanvas.getContext('2d');
+const codeTex = new THREE.CanvasTexture(screenCanvas); codeTex.colorSpace = THREE.SRGBColorSpace; codeTex.anisotropy = 8;
+const MONO = '500 27px "DejaVu Sans Mono", Menlo, Consolas, "Courier New", monospace';
+let lastScreenKey = '';
+function drawScreen(mode, lt, t) {
+  const sc = SCREENS[mode] || SCREENS.env;
+  const isLife = mode === 'lifecycle';
+  const total = isLife ? 0 : sc.lines.reduce((n, l) => n + l.reduce((m, x) => m + x[0].length, 0) + 1, 0);
+  const chars = isLife ? 0 : Math.min(total, Math.floor(lt * 55));
   const blink = Math.floor(t * 2) % 2;
-  const k = chars + ':' + blink; if (k === lastCodeKey) return; lastCodeKey = k;
+  const step = isLife ? Math.floor(lt * 1.25) % 10 : 0;
+  const k = mode + ':' + chars + ':' + blink + ':' + step; if (k === lastScreenKey) return; lastScreenKey = k;
   const g = cctx, W = 1024, H = 672;
   const grd = g.createLinearGradient(0, 0, W, H); grd.addColorStop(0, '#0e0a18'); grd.addColorStop(1, '#170c27');
   g.fillStyle = grd; g.fillRect(0, 0, W, H);
   g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, 0, W, 54);
   ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(34 + i * 26, 27, 8, 0, TAU); g.fill(); });
-  g.fillStyle = '#9a93ab'; g.font = '500 22px Inter, sans-serif'; g.fillText('test_release.py', 128, 35);
-  g.font = '500 27px "DejaVu Sans Mono", Menlo, Consolas, monospace';
-  let left = chars, y = 104, cx = 0, cy = 104;
-  CODE.forEach((line, li) => {
-    g.fillStyle = '#4a4458'; g.fillText(String(li + 1).padStart(2, ' '), 26, y);
-    let x = 90;
-    for (const [txt, col] of line) {
-      if (left <= 0) break;
-      const s = txt.slice(0, left); left -= s.length;
-      g.fillStyle = col; g.fillText(s, x, y); x += g.measureText(s).width;
-    }
-    if (left > 0) { left -= 1; cx = x; cy = y; } else if (left === 0 && cx === 0) { cx = x; cy = y; }
-    y += 46;
-  });
-  if (blink) { g.fillStyle = '#B250FF'; g.fillRect(cx + 3, cy - 24, 14, 30); }
-  // soft scanline sheen
+  g.fillStyle = '#9a93ab'; g.font = '500 22px Inter, sans-serif'; g.fillText(sc.title, 128, 35);
+  g.font = MONO;
+  if (isLife) {
+    sc.steps.forEach((name, i) => {
+      const y = 112 + i * 64; const done = i < step, cur = i === step;
+      if (cur) { g.fillStyle = 'rgba(178,80,255,.22)'; g.fillRect(60, y - 40, 900, 56); g.fillStyle = '#B250FF'; g.fillRect(60, y - 40, 6, 56); }
+      g.fillStyle = done ? C.ok : cur ? C.pu : '#4a4458'; g.fillText(done ? '✓' : cur ? '▶' : '·', 90, y);
+      g.fillStyle = '#4a4458'; g.fillText(String(i + 1).padStart(2, '0'), 140, y);
+      g.fillStyle = done || cur ? C.tx : '#6d667c'; g.fillText(name, 210, y);
+      if (cur) { g.fillStyle = C.pu; g.fillText('in progress', 690, y); }
+    });
+  } else {
+    let left = chars, y = 104, cx = 90, cy = 104;
+    sc.lines.forEach((line, li) => {
+      g.fillStyle = '#4a4458'; g.fillText(String(li + 1).padStart(2, ' '), 26, y);
+      let x = 90;
+      for (const [txt, col] of line) {
+        if (left <= 0) break;
+        const str = txt.slice(0, left); left -= str.length;
+        g.fillStyle = col; g.fillText(str, x, y); x += g.measureText(str).width;
+      }
+      if (left > 0) { left -= 1; cx = x; cy = y; } else if (left === 0 && x > 90) { cx = x; cy = y; }
+      y += 58;
+    });
+    if (blink) { g.fillStyle = '#B250FF'; g.fillRect(cx + 3, cy - 24, 14, 30); }
+  }
   const sh = g.createLinearGradient(0, 0, 0, H); sh.addColorStop(0, 'rgba(178,80,255,.10)'); sh.addColorStop(.5, 'rgba(0,0,0,0)');
   g.fillStyle = sh; g.fillRect(0, 0, W, H);
   codeTex.needsUpdate = true;
 }
-drawCode(0);
+drawScreen('env', 99, 0);
 const screenMat = new THREE.MeshBasicMaterial({ map: codeTex, color: new THREE.Color(1.25, 1.25, 1.25), toneMapped: false });
 const screen = new THREE.Mesh(new THREE.PlaneGeometry(2.96, 1.94), screenMat);
 screen.rotation.set(Math.PI / 2, 0, 0); screen.position.set(0, -0.002, 1.1); lidPivot.add(screen);
@@ -380,26 +416,77 @@ const particles = new THREE.Points(pGeo, pMat); particles.frustumCulled = false;
 /* ------------------------------------------------------------------ poses */
 // S is the single animated state; GSAP tweens it, the render loop applies it.
 const BASE = { x: 0, y: 0, z: 0, rx: 0.3, ry: 0, rz: 0, s: 1, lid: 0, split: 0, keys: 0, away: 0, rings: 0, halo: 0, beam: 0, sparkle: 0, dark: 0, violet: 0, sway: 0 };
+// fp = footprint width (world units at scale 1) used to keep the model inside the free space beside the text
 const POSES = {
-  hero:       { x: 1.85, y: -0.15, rx: 0.42, ry: -0.6, rz: 0.05, s: 1.02, lid: 0.68 },
-  about:      { x: 2.0, y: -0.15, rx: 0.2, ry: -0.3, rz: 0, s: 1.12, lid: 1 },
-  roots:      { x: -2.0, y: -0.3, rx: 0.62, ry: 0.85, rz: -0.08, s: 1.0, lid: 1, keys: 1 },
-  stats:      { x: 0.15, y: -0.45, rx: 0.16, ry: TAU - 0.3, rz: 0, s: 0.76, lid: 1, split: 1, keys: 0.3, rings: 1, sparkle: 1, dark: 1, sway: 1 },
-  experience: { x: 2.55, y: -0.1, rx: 0.2, ry: TAU + 0.55, s: 0.7, lid: 1, split: 0.8, keys: 0.15, halo: 1, sparkle: 1, dark: 1, sway: 1 },
-  skills:     { x: -2.5, y: -0.1, rx: 0.3, ry: TAU - 0.6, s: 0.74, lid: 1, split: 1, keys: 1, rings: 0.5, halo: 0.35, sparkle: 1, dark: 1, sway: 1 },
-  learning:   { x: 2.15, y: -0.55, rx: 0.04, ry: TAU, s: 1.0, lid: 1, split: 1, away: 1, beam: 1, rings: 0.45, sparkle: 1, dark: 1, violet: 1, sway: 0.4 },
-  contact:    { x: 2.35, y: -0.3, rx: 0.36, ry: TAU - 0.55, s: 0.95, lid: 1, halo: 0.55, sparkle: 0.6, dark: 1 },
+  hero:       { fp: 3.7, y: -0.15, rx: 0.42, ry: -0.6, rz: 0.05, s: 1.02, lid: 0.68 },
+  about:      { fp: 3.6, y: -0.15, rx: 0.2, ry: -0.3, rz: 0, s: 1.12, lid: 1 },
+  process:    { fp: 4.0, y: -0.3, rx: 0.5, ry: 0.55, rz: -0.06, s: 1.0, lid: 1, keys: 0.85 },
+  stats:      { fp: 4.3, y: -0.45, rx: 0.16, ry: TAU - 0.3, rz: 0, s: 0.76, lid: 1, split: 1, keys: 0.3, rings: 1, sparkle: 1, dark: 1, sway: 1 },
+  experience: { fp: 3.9, y: -0.1, rx: 0.2, ry: TAU + 0.45, s: 0.72, lid: 1, split: 0.8, keys: 0.15, halo: 1, sparkle: 1, dark: 1, sway: 1 },
+  projects:   { fp: 3.6, y: -0.05, rx: 0.24, ry: TAU - 0.38, s: 0.85, lid: 1, split: 0, keys: 0, halo: 0, sparkle: 0.8, dark: 1 },
+  skills:     { fp: 4.9, y: -0.4, rx: 0.3, ry: TAU + 0.6, s: 0.78, lid: 1, split: 1, keys: 1, rings: 0.35, halo: 0, sparkle: 1, dark: 1, sway: 1 },
+  learning:   { fp: 3.1, y: -0.55, rx: 0.04, ry: TAU, s: 1.0, lid: 1, split: 1, away: 1, beam: 1, rings: 0.45, sparkle: 1, dark: 1, violet: 1, sway: 0.4 },
+  resume:     { fp: 3.6, y: -0.2, rx: 0.32, ry: TAU - 0.5, s: 0.9, lid: 1, halo: 0, sparkle: 0.7, dark: 1 },
+  contact:    { fp: 3.6, y: -0.3, rx: 0.36, ry: TAU - 0.62, s: 0.95, lid: 0.8, halo: 0.55, sparkle: 0.6, dark: 1 },
 };
-const REDUCED_POSE = { x: 2.0, y: -0.2, rx: 0.3, ry: -0.35, s: 1.0, lid: 1 };
-function pose(name) {
-  let p = { ...BASE, ...POSES[name] };
-  if (REDUCED) p = { ...p, ...REDUCED_POSE, split: 0, keys: 0, away: 0, rings: 0, sway: 0 };
+const SCREEN_OF = { hero: 'env', about: 'env', process: 'lifecycle', stats: 'exec', experience: 'exec', projects: 'crm', skills: 'exec', learning: 'env', resume: 'env', contact: 'env' };
+const NAV_OF = { hero: 'home', about: 'about', process: 'about', stats: 'about', experience: 'experience', projects: 'projects', skills: 'skills', learning: 'learning', resume: 'resume', contact: 'contact' };
+const REDUCED_POSE = { rx: 0.3, ry: -0.35, lid: 1 };
+
+function absLeft(el) { let x = 0; while (el) { x += el.offsetLeft; el = el.offsetParent; } return x; }
+function viewWidthWorld() {
+  const dist = camera.position.z;
+  return 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect;
+}
+// place the model in the free horizontal band next to the section's content, scaled to fit
+function fitToLayout(p, sec) {
+  const vw = innerWidth, visW = viewWidthWorld(), k = visW / vw;
   if (isMobile()) {
-    p.x = 0; p.y = name === 'learning' ? 1.0 : 1.3; p.s *= name === 'stats' || name === 'skills' || name === 'experience' ? 0.62 : 0.56;
+    p.x = 0; p.y = p.away ? 1.0 : (p.split ? 1.15 : 1.3);
+    p.s = Math.min(p.s * 0.72, (visW * 0.62) / p.fp);
+    return p;
   }
+  const side = sec ? sec.dataset.side : 'right';
+  let L = 0, R = vw;
+  const edge = Math.min(48, vw * 0.03);
+  if (side === 'center') {
+    const l = [...sec.querySelectorAll('[data-col="l"]')], r = [...sec.querySelectorAll('[data-col="r"]')];
+    L = Math.max(...l.map((e) => absLeft(e) + e.offsetWidth)) + 30;
+    R = Math.min(...r.map((e) => absLeft(e))) - 30;
+  } else {
+    const blocks = [...sec.querySelectorAll('.block')];
+    if (side === 'right') { L = Math.max(...blocks.map((e) => absLeft(e) + e.offsetWidth)) + 28; R = vw - edge; }
+    else { L = edge; R = Math.min(...blocks.map((e) => absLeft(e))) - 28; }
+  }
+  const w = Math.max(40, R - L);
+  p.x = ((L + R) / 2 - vw / 2) * k;
+  p.s = Math.max(0.3, Math.min(p.s, (w * k * 0.94) / p.fp));
   return p;
 }
-const S = { ...pose('hero') };
+function pose(name, sec) {
+  let p = { ...BASE, ...POSES[name] };
+  if (REDUCED) p = { ...p, ...REDUCED_POSE, split: 0, keys: 0, away: 0, rings: 0, sway: 0, fp: 3.6 };
+  return fitToLayout(p, sec);
+}
+const S = { ...BASE, ...POSES.hero };
+const sections = [...document.querySelectorAll('[data-pose]')];
+
+// which section is in view drives the laptop screen and the nav highlight
+let secTops = [], screenMode = 'env', modeStart = -1, navId = '';
+const navLinks = [...document.querySelectorAll('.nav-links a')];
+function updateSection() {
+  if (!secTops.length) return;
+  const y = scrollY + innerHeight * 0.5;
+  let i = 0; for (let j = 0; j < secTops.length; j++) if (secTops[j] <= y) i = j;
+  const name = sections[i].dataset.pose;
+  const m = SCREEN_OF[name] || 'env';
+  if (m !== screenMode) { screenMode = m; modeStart = -1; }
+  const n = NAV_OF[name];
+  if (n !== navId) {
+    navId = n;
+    navLinks.forEach((a) => (a.getAttribute('href') === '#' + n ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+  }
+}
 
 /* ------------------------------------------------------------------ scroll */
 let lenis = null;
@@ -412,24 +499,32 @@ if (!REDUCED && !RECORD) {
 document.querySelectorAll('[data-scroll]').forEach((a) => a.addEventListener('click', (e) => {
   const target = document.querySelector(a.getAttribute('href')); if (!target) return;
   e.preventDefault();
-  if (lenis) lenis.scrollTo(target, { duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 4) });
-  else target.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' });
+  const wasOpen = !menu.hidden;
+  if (wasOpen) setMenu(false);
+  const go = () => {
+    if (lenis) lenis.scrollTo(target, { duration: wasOpen ? 1.0 : 1.6, force: true, easing: (t) => 1 - Math.pow(1 - t, 4) });
+    else target.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' });
+  };
+  wasOpen ? requestAnimationFrame(() => requestAnimationFrame(go)) : go();
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+  target.focus({ preventScroll: true });
+  history.replaceState(null, '', a.getAttribute('href'));
 }));
 
-const sections = [...document.querySelectorAll('[data-pose]')];
 let master = null;
 function buildTimeline() {
   if (master) { master.scrollTrigger && master.scrollTrigger.kill(); master.kill(); }
   const vh = innerHeight;
   const max = Math.max(1, document.documentElement.scrollHeight - vh);
-  Object.assign(S, pose('hero'));
+  Object.assign(S, pose('hero', sections[0]));
+  secTops = sections.map((sec) => sec.offsetTop);
   master = gsap.timeline({ defaults: { ease: 'power2.inOut' }, scrollTrigger: { start: 0, end: () => max, scrub: true } });
   sections.forEach((sec, i) => {
     if (!i) return;
     const top = sec.offsetTop;
     const start = Math.max(0, top - vh * 0.95);
     const end = Math.min(max, Math.max(start + 1, top - vh * 0.12));
-    master.to(S, { ...pose(sec.dataset.pose), duration: end - start }, start);
+    master.to(S, { ...pose(sec.dataset.pose, sec), duration: end - start }, start);
   });
   master.set({}, {}, max);
 }
@@ -439,7 +534,7 @@ function buildReveals() {
   if (REDUCED) return;
   // cache absolute positions (transforms cleared) so the reveal math has no feedback loop
   const els = [...document.querySelectorAll('.reveal')];
-  els.forEach((el) => gsap.set(el, { clearProps: 'transform,opacity,visibility' }));
+  els.forEach((el) => gsap.set(el, { clearProps: 'transform,opacity' }));
   reveals = els.map((el) => {
     const r = el.getBoundingClientRect(); const from = el.dataset.from;
     return {
@@ -456,18 +551,17 @@ function updateReveals() {
   for (const r of reveals) {
     const top = r.top - y, bottom = r.bottom - y;
     const inP = 1 - smooth(0.64 * vh, 0.94 * vh, top);           // 0 -> 1 as it rises into view
-    const outP = mob ? smooth(0.3 * vh, 0.06 * vh, top) : smooth(0.42 * vh, 0.12 * vh, bottom);
+    const outP = mob ? smooth(0.3 * vh, 0.04 * vh, bottom) : smooth(0.42 * vh, 0.12 * vh, bottom);
     const e = 1 - Math.pow(1 - inP, 3);
     const o = Math.round(e * (1 - outP) * 1000) / 1000;
     const key = o + ':' + Math.round(e * 1000) + ':' + Math.round(outP * 1000);
     if (key === r.last) continue; r.last = key;
-    r.set({ opacity: o, visibility: o <= 0.001 ? 'hidden' : 'visible',
-      x: r.dx * (1 - e), y: r.dy * (1 - e) - 50 * outP });
+    r.set({ opacity: Math.max(o, r.el.matches(':focus-within') ? 1 : 0), x: r.dx * (1 - e), y: r.dy * (1 - e) - 50 * outP });
   }
 }
 function heroIntro() {
   if (RECORD || REDUCED) return;
-  gsap.from('.hero .h-stack span, .hero .label, .hero .tagline, .hero .loc, .scroll-cue', { opacity: 0, y: 40, duration: 1.2, stagger: 0.08, ease: 'power3.out', delay: 0.15 });
+  gsap.from('.hero .h-stack span, .hero .label, .hero .role-line, .hero .statement, .hero .support, .hero .loc, .hero .cta, .scroll-cue', { opacity: 0, y: 40, duration: 1.2, stagger: 0.08, ease: 'power3.out', delay: 0.15 });
 }
 
 /* ------------------------------------------------------------------ frame */
@@ -504,7 +598,9 @@ function apply(t) {
   coreHalo.material.opacity = sp * (0.18 + 0.22 * S.dark);
   coreLight.intensity = sp * 7;
   screenLight.intensity = S.lid * (2 + 6 * S.dark);
-  if (S.lid > 0.05) drawCode(REDUCED ? 6 : t);
+  updateSection();
+  if (modeStart < 0 || t < modeStart) modeStart = t;
+  if (S.lid > 0.05) drawScreen(screenMode, REDUCED ? 99 : t - modeStart, REDUCED ? 0 : t);
 
   // world-space anchors
   core.getWorldPosition(tmp);
@@ -523,7 +619,7 @@ function apply(t) {
     r.visible = r.material.opacity > 0.003;
   });
   halo.position.set(tmp.x, tmp.y, tmp.z - 1.4);
-  halo.scale.setScalar(k * 0.92);
+  halo.scale.setScalar(k * 0.8);
   haloMat.uniforms.uOpacity.value = S.halo; haloMat.uniforms.uTime.value = t; halo.visible = S.halo > 0.003;
   beam.position.set(tmp.x, tmp.y + 3.0, tmp.z - 0.3);
   beam.scale.setScalar(Math.max(k, 0.6));
@@ -585,14 +681,101 @@ addEventListener('resize', () => {
   }, 200);
 });
 
+/* ------------------------------------------------------------------ UI extras */
+// experience is calculated, not hardcoded
+function experience() {
+  const start = new Date(2025, 2, 24); const now = new Date();
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  if (now.getDate() < start.getDate()) months -= 1;
+  months = Math.max(0, months);
+  const y = Math.floor(months / 12), m = months % 12;
+  const dec = (months / 12).toFixed(1).replace(/\.0$/, '');
+  const yrs = document.getElementById('exp-years');
+  if (yrs) yrs.textContent = months < 12 ? `${months} mos` : `${dec} yrs`;
+  const long = [y ? `${y} yr${y > 1 ? 's' : ''}` : '', m ? `${m} mo${m > 1 ? 's' : ''}` : ''].filter(Boolean).join(' ') || 'Less than a month';
+  document.querySelectorAll('[data-exp-duration]').forEach((el) => (el.textContent = long));
+}
+
+// resume PDF: if it isn't uploaded yet, don't send people to a 404
+const toastEl = document.getElementById('toast'); let toastT;
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 3600);
+}
+async function checkResume() {
+  const links = [...document.querySelectorAll('[data-resume]')]; if (!links.length) return;
+  let ok = false;
+  try { const r = await fetch(links[0].getAttribute('href'), { method: 'HEAD', cache: 'no-store' }); ok = r.ok; } catch (e) { ok = false; }
+  if (ok) return;
+  links.forEach((a) => {
+    a.classList.add('is-pending'); a.setAttribute('aria-disabled', 'true'); a.removeAttribute('download');
+    a.title = 'Resume PDF coming soon. Please use LinkedIn for now.';
+    a.addEventListener('click', (e) => { e.preventDefault(); toast('The resume PDF is coming soon. Meanwhile, my full profile is on LinkedIn.'); });
+  });
+}
+
+// hamburger menu
+const burger = document.getElementById('burger'), menu = document.getElementById('menu');
+function setMenu(open) {
+  document.documentElement.classList.toggle('menu-open', open);
+  burger.setAttribute('aria-expanded', String(open));
+  burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  if (open) { menu.hidden = false; lenis && lenis.stop(); gsap.fromTo('.menu li', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: REDUCED ? 0 : 0.5, stagger: REDUCED ? 0 : 0.04, ease: 'power3.out' }); menu.querySelector('a').focus(); }
+  else { menu.hidden = true; lenis && lenis.start(); }
+}
+burger.addEventListener('click', () => setMenu(burger.getAttribute('aria-expanded') !== 'true'));
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !menu.hidden) { setMenu(false); burger.focus(); }
+  if (e.key === 'Tab' && !menu.hidden) { // keep focus inside the open menu
+    const f = [burger, ...menu.querySelectorAll('a')]; const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+  }
+});
+addEventListener('resize', () => { if (innerWidth > 1180 && !menu.hidden) setMenu(false); });
+
+// "How I approach testing": rail fills and steps light up with scroll
+let stepsTL = null;
+function buildSteps() {
+  const list = document.getElementById('steps'); if (!list) return;
+  const items = [...list.children];
+  if (stepsTL) { stepsTL.scrollTrigger && stepsTL.scrollTrigger.kill(); stepsTL.kill(); }
+  if (REDUCED) { list.style.setProperty('--fill', 1); items.forEach((li) => { li.style.setProperty('--o', 1); li.classList.add('on'); }); return; }
+  stepsTL = gsap.timeline({
+    scrollTrigger: {
+      trigger: list, start: 'top 78%', end: 'bottom 52%', scrub: true,
+      onUpdate: (self) => items.forEach((li, i) => li.classList.toggle('on', self.progress >= (i + 0.5) / items.length)),
+    },
+  });
+  stepsTL.fromTo(list, { '--fill': 0 }, { '--fill': 1, ease: 'none', duration: 1 }, 0);
+  items.forEach((li, i) => stepsTL.fromTo(li, { '--o': 0.25 }, { '--o': 1, ease: 'power2.out', duration: 0.18 }, (i / items.length) * 0.9));
+}
+
+// rebuild scroll maps when layout height changes (details opened, fonts, resize)
+let relayT, lastH = 0;
+function relayout() {
+  clearTimeout(relayT);
+  relayT = setTimeout(() => {
+    const h = document.documentElement.scrollHeight;
+    if (h === lastH) return; lastH = h;
+    buildTimeline(); ScrollTrigger.refresh(); buildReveals();
+  }, 150);
+}
+
 /* ------------------------------------------------------------------ boot */
 async function boot() {
   try { await document.fonts.ready; } catch (e) { /* ignore */ }
+  experience();
   resize();
   buildTimeline();
+  buildSteps();
   ScrollTrigger.refresh();
   buildReveals();
   heroIntro();
+  checkResume();
+  lastH = document.documentElement.scrollHeight;
+  if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(document.getElementById('main'));
+  document.querySelectorAll('details').forEach((d) => d.addEventListener('toggle', relayout));
   if (RECORD) {
     // deterministic stepping for capture: set scroll + time, render one frame
     window.__frame = (y, t) => {
@@ -601,6 +784,18 @@ async function boot() {
       return true;
     };
     window.__maxScroll = () => document.documentElement.scrollHeight - innerHeight;
+    window.__modelRect = () => { // screen-space bounds of the visible model parts (QA helper)
+      const box = new THREE.Box3();
+      if (S.away < 0.5) { box.expandByObject(baseGroup); box.expandByObject(lidPivot); }
+      if (core.visible && core.scale.x > 0.05) [shield, lensRing, handle].forEach((o) => box.expandByObject(o));
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; const v = new THREE.Vector3();
+      for (let i = 0; i < 8; i++) {
+        v.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).project(camera);
+        const sx = (v.x * 0.5 + 0.5) * innerWidth, sy = (-v.y * 0.5 + 0.5) * innerHeight;
+        x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy);
+      }
+      return { left: x0, right: x1, top: y0, bottom: y1 };
+    };
     window.__anchors = () => sections.map((s) => ({ name: s.dataset.pose, top: s.offsetTop, h: s.offsetHeight }));
     apply(0); render();
   } else if (REDUCED) {
