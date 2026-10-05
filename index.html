@@ -14,7 +14,6 @@
   <meta property="og:description" content="Software Test Engineer focused on Windows feature validation, manual testing, regression testing, defect reporting and release readiness. Hyderabad, India." />
   <meta property="og:url" content="https://venkyrockzs333.github.io/" />
   <meta property="og:locale" content="en_IN" />
-  <!-- TODO: add og:image / twitter:image once a real 1200x630 preview image exists (e.g. assets/og-image.png) -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="Venkateshwarlu Boda | Software Test Engineer | Windows QA" />
   <meta name="twitter:description" content="Software Test Engineer focused on Windows feature validation, manual testing, regression testing, defect reporting and release readiness." />
@@ -22,7 +21,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23151515'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-weight='900' font-size='28' fill='%23B250FF'%3EVB%3C/text%3E%3C/svg%3E" />
   <link rel="preload" href="fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="vendor/lenis.css" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -109,7 +108,7 @@
         <div class="cta">
           <a class="btn dark-btn" href="#experience" data-scroll>View Experience</a>
           <a class="btn line-btn" href="#projects" data-scroll>View Projects</a>
-          <a class="btn line-btn" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=2" data-resume download type="application/pdf">Download Resume</a>
+          <a class="btn line-btn" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=3" data-resume download type="application/pdf">Download Resume</a>
           <a class="btn text-btn" href="https://www.linkedin.com/in/venkateshwarlu-boda-901b50270/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
         </div>
       </div>
@@ -206,61 +205,14 @@
         <p class="label reveal" data-from="left">Selected work</p>
         <h2 class="h-stack reveal" data-from="left" id="projects-title"><span class="xb">Featured</span><span class="th">Projects</span></h2>
 
-        <!-- 01 CRM -->
-        <!-- TODO: the CRM source was not found on github.com/venkyrockzs333 (checked 5 Oct 2026).
-             Confirm the real feature list and add the repository URL; until then features stay "to be confirmed". -->
+        <!-- 01 K2: professional client work at Wipro (kept generic for confidentiality) -->
         <article class="project reveal" data-from="left" aria-labelledby="p1-title">
           <span class="num" aria-hidden="true">01</span>
           <div class="p-body">
-            <p class="badge">Full-Stack Project</p>
-            <h3 id="p1-title">CRM Web Application</h3>
-            <p class="cat">Customer relationship management · Web app</p>
-            <p class="desc">A customer relationship management web app with a Flask backend, a SQLAlchemy data layer on MySQL and an HTML/CSS/JavaScript frontend that talks to the server through the Fetch API.</p>
-            <ol class="flow" aria-label="Architecture: Frontend to Flask to SQLAlchemy to MySQL">
-              <li>Frontend<small>HTML · CSS · JS</small></li>
-              <li>Flask<small>Routes &amp; logic</small></li>
-              <li>SQLAlchemy<small>ORM models</small></li>
-              <li>MySQL<small>Database</small></li>
-            </ol>
-            <ul class="tags" aria-label="Technologies">
-              <li>Python</li><li>Flask</li><li>SQLAlchemy</li><li>MySQL</li><li>PyMySQL</li><li>HTML</li><li>CSS</li><li>JavaScript</li><li>Bootstrap</li><li>Fetch API</li><li>Flask-Migrate / Alembic</li>
-            </ul>
-            <p class="contrib"><span class="label">Key contribution</span>
-              <!-- TODO: confirm scope (solo or team) and exact contribution -->
-              Full-stack development across the Flask backend, the SQLAlchemy/MySQL data layer with migrations, and the JavaScript frontend.</p>
-            <details>
-              <summary>Details &amp; testing approach</summary>
-              <div class="details-in">
-                <p class="mini-h">Features</p>
-                <p class="tbc">Feature list to be confirmed.</p>
-                <p class="mini-h">How it can be validated</p>
-                <ul class="test-panel">
-                  <li><b>Functional</b> Each screen and API route behaves as specified</li>
-                  <li><b>Form validation</b> Required fields, formats and error messages</li>
-                  <li><b>CRUD</b> Create, read, update and delete records end to end</li>
-                  <li><b>Boundary</b> Empty, maximum-length and edge input values</li>
-                  <li><b>Negative</b> Invalid input and unexpected requests are rejected cleanly</li>
-                  <li><b>DB validation</b> What the UI shows matches what MySQL stores</li>
-                  <li><b>UI</b> Layout, states and feedback across screen sizes</li>
-                </ul>
-              </div>
-            </details>
-            <div class="p-links">
-              <!-- TODO: replace with the real GitHub repository URL once it is public -->
-              <span class="btn small disabled" aria-disabled="true">GitHub · Link coming soon</span>
-              <span class="btn small disabled" aria-disabled="true">Live demo · Not deployed</span>
-            </div>
-          </div>
-        </article>
-
-        <!-- 02 K2 (professional, part of Wipro role; keep generic) -->
-        <article class="project reveal" data-from="left" aria-labelledby="p2-title">
-          <span class="num" aria-hidden="true">02</span>
-          <div class="p-body">
             <p class="badge">Professional Experience</p>
-            <h3 id="p2-title">Windows Feature Testing · K2</h3>
-            <p class="cat">Wipro · Client project · Not a personal project</p>
-            <p class="desc">Windows feature validation on a client project as part of my role at Wipro. Details are kept generic to respect client confidentiality.</p>
+            <h3 id="p1-title">Windows Feature Testing · K2</h3>
+            <p class="cat">Wipro · Client Project · Not a Personal Project</p>
+            <p class="desc">Windows feature validation on a client project as part of my role at Wipro: executing test cases, catching defects early and confirming each build is ready to release. Details stay generic to respect client confidentiality.</p>
             <ol class="flow" aria-label="Workflow: Build, Execute, Report, Retest, Release">
               <li>Build<small>Validate</small></li>
               <li>Execute<small>Test cases</small></li>
@@ -271,7 +223,16 @@
             <ul class="tags" aria-label="Focus areas">
               <li>Windows</li><li>Manual Testing</li><li>Test-case validation</li><li>Regression</li><li>Defect reporting</li>
             </ul>
-            <p class="contrib"><span class="label">Key contribution</span>Manual test execution, edge-case and negative testing, defect reports with clear repro steps, retesting and build validation for release readiness.</p>
+            <div class="contrib"><span class="label">Windows QA focus</span>
+              <ul class="contrib-list">
+                <li>Manual test execution</li>
+                <li>Test-case validation against expected behaviour</li>
+                <li>Edge-case and negative testing</li>
+                <li>Defect reports with clear repro steps</li>
+                <li>Retesting fixes and regression checks</li>
+                <li>Build validation for release readiness</li>
+              </ul>
+            </div>
             <details>
               <summary>Details</summary>
               <div class="details-in">
@@ -287,39 +248,91 @@
           </div>
         </article>
 
-        <!-- 03 IoT (academic) -->
-        <!-- Components confirmed by Venkateshwarlu: gas sensor, temperature sensor, smoke detector, Arduino.
-             Alerts confirmed: local buzzer + WiFi-connected phone alerts (do not name a WiFi module or app; not specified).
-             TODO: confirm Venkateshwarlu's own contribution. No repository found on GitHub. -->
+        <!-- 02 CRM: personal full-stack project (no public repository or deployment) -->
+        <article class="project reveal" data-from="left" aria-labelledby="p2-title">
+          <span class="num" aria-hidden="true">02</span>
+          <div class="p-body">
+            <p class="badge">Personal Project</p>
+            <h3 id="p2-title">CRM Web Application</h3>
+            <p class="cat">Role: Full-Stack Developer</p>
+            <p class="desc">A customer relationship management web app built end to end: a Flask backend, a SQLAlchemy data layer on MySQL with Alembic migrations, and an HTML/CSS/JavaScript frontend that talks to the server through the Fetch API.</p>
+            <ol class="flow" aria-label="Architecture: Frontend to Flask to SQLAlchemy to MySQL">
+              <li>Frontend<small>HTML · CSS · JS</small></li>
+              <li>Flask<small>Routes &amp; logic</small></li>
+              <li>SQLAlchemy<small>ORM models</small></li>
+              <li>MySQL<small>Database</small></li>
+            </ol>
+            <ul class="tags" aria-label="Technologies">
+              <li>Python</li><li>Flask</li><li>SQLAlchemy</li><li>MySQL</li><li>PyMySQL</li><li>HTML</li><li>CSS</li><li>JavaScript</li><li>Bootstrap</li><li>Fetch API</li><li>Flask-Migrate / Alembic</li>
+            </ul>
+            <p class="contrib"><span class="label">Focus</span>Python/Flask backend, relational data modelling with SQLAlchemy and MySQL, and a JavaScript frontend using asynchronous Fetch API calls.</p>
+            <details>
+              <summary>Details &amp; testing approach</summary>
+              <div class="details-in">
+                <p class="mini-h">What it does</p>
+                <ul class="plain">
+                  <li>Create, view, update and delete records through Flask routes (full CRUD)</li>
+                  <li>Data stored in MySQL through SQLAlchemy ORM models (PyMySQL driver)</li>
+                  <li>Frontend sends asynchronous Fetch API requests, so pages update without full reloads</li>
+                  <li>Database schema changes versioned with Flask-Migrate / Alembic migrations</li>
+                  <li>Responsive interface built with HTML, CSS, JavaScript and Bootstrap</li>
+                </ul>
+                <p class="mini-h">How it can be validated</p>
+                <ul class="test-panel">
+                  <li><b>Functional</b> Each screen and API route behaves as specified</li>
+                  <li><b>Form validation</b> Required fields, formats and error messages</li>
+                  <li><b>CRUD</b> Create, read, update and delete records end to end</li>
+                  <li><b>Boundary</b> Empty, maximum-length and edge input values</li>
+                  <li><b>Negative</b> Invalid input and unexpected requests are rejected cleanly</li>
+                  <li><b>DB validation</b> What the UI shows matches what MySQL stores</li>
+                  <li><b>UI</b> Layout, states and feedback across screen sizes</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </article>
+
+        <!-- 03 IoT: B.Tech team project (leadership, frontend and testing) -->
         <article class="project reveal" data-from="left" aria-labelledby="p3-title">
           <span class="num" aria-hidden="true">03</span>
           <div class="p-body">
             <p class="badge">Academic Project</p>
             <h3 id="p3-title">IoT-Based Coal Mine Safety Monitoring &amp; Alerting System</h3>
-            <p class="cat">B.Tech final-year team project</p>
-            <p class="desc"><b>Problem:</b> coal mines expose workers to dangerous environmental conditions. <b>Solution:</b> an Arduino-based IoT system that monitors gas, temperature and smoke levels in the mine and, when a safety threshold is crossed, sounds a local buzzer and sends a phone alert over WiFi.</p>
-            <ol class="flow" aria-label="Flow: Problem, Monitoring, Detection, Alert">
-              <li>Problem<small>Unsafe conditions</small></li>
-              <li>Monitoring<small>Gas · temp · smoke</small></li>
-              <li>Detection<small>Arduino thresholds</small></li>
+            <p class="cat">Team-based B.Tech project</p>
+            <p class="role-l"><span class="label">Role</span> <span class="nw">Project Leader</span> · <span class="nw">Frontend Development</span> · <span class="nw">Testing</span></p>
+            <p class="desc">Arduino-based IoT safety monitoring system designed to detect hazardous conditions such as gas, temperature, and smoke threshold breaches and trigger local and remote alerts.</p>
+            <ol class="flow" aria-label="Flow: Monitoring, Detection, Validation, Alert">
+              <li>Monitoring<small>Sensors</small></li>
+              <li>Detection<small>Thresholds</small></li>
+              <li>Validation<small>Checks</small></li>
               <li>Alert<small>Buzzer + phone</small></li>
             </ol>
-            <ul class="tags" aria-label="Technologies"><li>Arduino</li><li>Gas sensor</li><li>Temperature sensor</li><li>Smoke detector</li><li>Buzzer</li><li>WiFi alerts</li><li>IoT</li></ul>
-            <!-- TODO: replace with Venkateshwarlu's actual contribution once confirmed -->
-            <p class="contrib"><span class="label">Role</span>Final-year team project. <span class="tbc">Individual contribution to be confirmed.</span></p>
+            <ul class="tags" aria-label="Components"><li>Arduino</li><li>Gas sensor</li><li>Temperature sensor</li><li>Smoke sensor</li><li>Buzzer</li><li>WiFi phone alerts</li><li>IoT</li></ul>
+            <div class="contrib"><span class="label">My contribution</span>
+              <ul class="contrib-list">
+                <li>Project leadership and team coordination</li>
+                <li>Frontend/interface development</li>
+                <li>Functional testing</li>
+                <li>Sensor-condition and alert validation</li>
+                <li>Positive and negative scenario testing</li>
+                <li>Expected vs actual behavior validation</li>
+                <li>Identifying and documenting issues during testing</li>
+              </ul>
+            </div>
+            <p class="focus">Focus: leadership, frontend, testing and IoT system validation</p>
             <details>
               <summary>Details</summary>
               <div class="details-in">
                 <p class="mini-h">Components</p>
                 <ul class="plain">
                   <li>Arduino microcontroller</li>
-                  <li>Gas sensor</li>
-                  <li>Temperature sensor</li>
-                  <li>Smoke detector</li>
-                  <li>Local buzzer and WiFi-connected phone alerts</li>
+                  <li>Gas, temperature and smoke sensors</li>
+                  <li>Local buzzer alert</li>
+                  <li>WiFi-connected phone alerts</li>
                 </ul>
                 <p class="mini-h">How it works</p>
-                <p class="desc" style="margin-top:0">The gas, temperature and smoke sensors feed readings to the Arduino. When a reading breaches its safety threshold, the Arduino sounds the buzzer on site and sends an alert to a phone over WiFi.</p>
+                <p class="desc" style="margin-top:0">The sensors feed gas, temperature and smoke readings to the Arduino. When a reading breaches its safety threshold, the system sounds the buzzer on site and sends an alert to a phone over WiFi.</p>
+                <p class="note">Built as a team for the B.Tech programme; my part covered leading the team, the frontend/interface and testing the system.</p>
               </div>
             </details>
           </div>
@@ -395,7 +408,7 @@
         <div class="resume-cta reveal" data-from="left">
           <h2 class="h-stack small" id="resume-title"><span class="xb">Want the complete</span><span class="th">overview?</span></h2>
           <div class="cta">
-            <a class="btn primary" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=2" data-resume download type="application/pdf">Download Resume</a>
+            <a class="btn primary" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=3" data-resume download type="application/pdf">Download Resume</a>
             <a class="btn ghost" href="https://www.linkedin.com/in/venkateshwarlu-boda-901b50270/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
           </div>
         </div>
@@ -426,7 +439,7 @@
           <a class="btn primary" href="https://www.linkedin.com/in/venkateshwarlu-boda-901b50270/" target="_blank" rel="noopener">LinkedIn <span aria-hidden="true">↗</span></a>
           <a class="btn ghost" href="mailto:venkateshwarluboda1806@gmail.com">Email</a>
           <a class="btn ghost" href="https://github.com/venkyrockzs333" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
-          <a class="btn ghost" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=2" data-resume download>Resume</a>
+          <a class="btn ghost" href="assets/Venkateshwarlu_Boda_Resume.pdf?v=3" data-resume download>Resume</a>
         </div>
         <p class="mail reveal" data-from="left"><a href="mailto:venkateshwarluboda1806@gmail.com">venkateshwarluboda1806@gmail.com</a></p>
       </div>
@@ -441,7 +454,7 @@
   <script src="vendor/gsap.min.js"></script>
   <script src="vendor/ScrollTrigger.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
-  <script type="module" src="js/main.js"></script>
-  <script type="module" src="js/cursor.js?v=2"></script>
+  <script type="module" src="js/main.js?v=3"></script>
+  <script type="module" src="js/cursor.js?v=3"></script>
 </body>
 </html>

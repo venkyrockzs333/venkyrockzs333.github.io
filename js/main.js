@@ -9,6 +9,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 const { gsap, ScrollTrigger, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger);
@@ -25,11 +27,13 @@ const VIOLET = new THREE.Color('#8B5CF6');
 
 /* ------------------------------------------------------------------ renderer */
 const canvas = document.getElementById('gl');
+// antialias on the default framebuffer: light sections render straight to screen (no post-processing)
 const renderer = new THREE.WebGLRenderer({
-  canvas, antialias: LOW, alpha: false, powerPreference: 'high-performance',
-  preserveDrawingBuffer: RECORD,
+  canvas, antialias: true, alpha: false, powerPreference: 'high-performance',
+  preserveDrawingBuffer: RECORD, stencil: false,
 });
-let pixelRatio = RECORD ? 1 : Math.min(devicePixelRatio, LOW ? 1.5 : 2);
+// DPR cap: 1.5 on desktop, 1 on phones/tablets
+let pixelRatio = RECORD ? 1 : Math.min(devicePixelRatio, LOW ? 1 : 1.5);
 renderer.setPixelRatio(pixelRatio);
 renderer.setSize(innerWidth, innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -45,19 +49,22 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 1.0;
 
 /* post-processing (desktop only) */
-let composer = null, bloom = null;
+let composer = null, bloom = null, fxaa = null;
 function setupComposer() {
   const rt = new THREE.WebGLRenderTarget(innerWidth * pixelRatio, innerHeight * pixelRatio, {
-    type: THREE.HalfFloatType, samples: 4,
+    type: THREE.HalfFloatType, samples: 0, // no MSAA on the HDR target: FXAA at the end is far cheaper
   });
   composer = new EffectComposer(renderer, rt);
   composer.setPixelRatio(pixelRatio);
   composer.setSize(innerWidth, innerHeight);
   composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.3, 0.5, 0.9);
+  // UnrealBloom renders its blur chain from half resolution; it is skipped entirely on light sections and on mobile/tablet
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  fxaa = new ShaderPass(FXAAShader); composer.addPass(fxaa); setFxaa();
 }
+function setFxaa() { if (fxaa) fxaa.material.uniforms.resolution.value.set(1 / (innerWidth * pixelRatio), 1 / (innerHeight * pixelRatio)); }
 if (!LOW) setupComposer();
 
 /* ------------------------------------------------------------------ helpers */
@@ -214,7 +221,7 @@ function drawScreen(mode, lt, t) {
   const sc = SCREENS[mode] || SCREENS.env;
   const isLife = mode === 'lifecycle';
   const total = isLife ? 0 : sc.lines.reduce((n, l) => n + l.reduce((m, x) => m + x[0].length, 0) + 1, 0);
-  const chars = isLife ? 0 : Math.min(total, Math.floor(lt * 55));
+  const chars = isLife ? 0 : Math.min(total, Math.floor(Math.floor(lt * 12) / 12 * 55)); // 12 texture uploads/s max
   const blink = Math.floor(t * 2) % 2;
   const step = isLife ? Math.floor(lt * 1.25) % 10 : 0;
   const k = mode + ':' + chars + ':' + blink + ':' + step; if (k === lastScreenKey) return; lastScreenKey = k;
@@ -376,7 +383,7 @@ const floorGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), additive({ map: 
 floorGlow.rotation.x = -Math.PI / 2 + 0.25; scene.add(floorGlow);
 
 // sparkly metallic particles
-const N = LOW ? 450 : 1600;
+const N = LOW ? 260 : 900; // animated entirely in the vertex shader (uTime)
 const pGeo = new THREE.BufferGeometry();
 const pos = new Float32Array(N * 3), ph = new Float32Array(N), sz = new Float32Array(N);
 for (let i = 0; i < N; i++) {
@@ -491,9 +498,10 @@ function updateSection() {
 /* ------------------------------------------------------------------ scroll */
 let lenis = null;
 if (!REDUCED && !RECORD) {
-  lenis = new Lenis({ lerp: 0.08, smoothWheel: true, wheelMultiplier: 0.9, touchMultiplier: 1.4 });
+  // responsive, not floaty; phones keep native touch scrolling (syncTouch false)
+  lenis = new Lenis({ lerp: 0.11, smoothWheel: true, wheelMultiplier: 1, syncTouch: false, autoRaf: false });
   lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.add((time) => lenis.raf(time * 1000)); // the only rAF loop on the page is gsap.ticker
   gsap.ticker.lagSmoothing(0);
 }
 document.querySelectorAll('[data-scroll]').forEach((a) => a.addEventListener('click', (e) => {
@@ -532,33 +540,38 @@ function buildTimeline() {
 let reveals = [];
 function buildReveals() {
   if (REDUCED) return;
-  // cache absolute positions (transforms cleared) so the reveal math has no feedback loop
+  reveals.forEach((r) => r.st.kill());
+  // measure with transforms cleared, then drive each element from its own ScrollTrigger (fires only while in range)
   const els = [...document.querySelectorAll('.reveal')];
   els.forEach((el) => gsap.set(el, { clearProps: 'transform,opacity' }));
+  const vh = innerHeight, mob = isMobile(), y0 = scrollY;
   reveals = els.map((el) => {
-    const r = el.getBoundingClientRect(); const from = el.dataset.from;
-    return {
-      el, top: r.top + scrollY, bottom: r.bottom + scrollY,
-      dx: isMobile() ? 0 : from === 'left' ? -90 : from === 'right' ? 90 : 0, dy: from === 'up' ? 70 : 40,
-      set: gsap.quickSetter(el, 'css'), last: -1,
+    const rc = el.getBoundingClientRect(); const from = el.dataset.from;
+    const r = {
+      el, top: rc.top + y0, bottom: rc.bottom + y0, vh, mob,
+      dx: mob ? 0 : from === 'left' ? -90 : from === 'right' ? 90 : 0, dy: from === 'up' ? 70 : 40,
+      set: gsap.quickSetter(el, 'css'), last: '',
     };
+    r.st = ScrollTrigger.create({ start: Math.max(0, r.top - vh), end: r.bottom, onUpdate: (self) => revealAt(r, self.scroll()), onRefresh: (self) => revealAt(r, self.scroll()) });
+    revealAt(r, y0);
+    return r;
   });
-  updateReveals();
 }
-function updateReveals() {
-  if (!reveals.length) return;
-  const vh = innerHeight, y = scrollY, mob = isMobile();
-  for (const r of reveals) {
-    const top = r.top - y, bottom = r.bottom - y;
-    const inP = 1 - smooth(0.64 * vh, 0.94 * vh, top);           // 0 -> 1 as it rises into view
-    const outP = mob ? smooth(0.3 * vh, 0.04 * vh, bottom) : smooth(0.42 * vh, 0.12 * vh, bottom);
-    const e = 1 - Math.pow(1 - inP, 3);
-    const o = Math.round(e * (1 - outP) * 1000) / 1000;
-    const key = o + ':' + Math.round(e * 1000) + ':' + Math.round(outP * 1000);
-    if (key === r.last) continue; r.last = key;
-    r.set({ opacity: Math.max(o, r.el.matches(':focus-within') ? 1 : 0), x: r.dx * (1 - e), y: r.dy * (1 - e) - 50 * outP });
-  }
+function revealAt(r, y) {
+  const vh = r.vh, top = r.top - y, bottom = r.bottom - y;
+  const inP = 1 - smooth(0.64 * vh, 0.94 * vh, top);
+  const outP = r.mob ? smooth(0.3 * vh, 0.04 * vh, bottom) : smooth(0.42 * vh, 0.12 * vh, bottom);
+  const e = 1 - Math.pow(1 - inP, 3);
+  let o = Math.round(e * (1 - outP) * 1000) / 1000;
+  if (r.focus) o = 1;
+  const key = o + ':' + Math.round(e * 500) + ':' + Math.round(outP * 500);
+  if (key === r.last) return; r.last = key;
+  r.set({ opacity: o, x: r.dx * (1 - e), y: r.dy * (1 - e) - 50 * outP });
 }
+// keyboard users: anything focused is fully visible
+document.addEventListener('focusin', (e) => { const r = reveals.find((x) => x.el.contains(e.target)); if (r) { r.focus = true; r.last = ''; revealAt(r, scrollY); } });
+document.addEventListener('focusout', (e) => { const r = reveals.find((x) => x.el.contains(e.target)); if (r) { r.focus = false; r.last = ''; revealAt(r, scrollY); } });
+function updateReveals() { reveals.forEach((r) => revealAt(r, scrollY)); } // used by ?record stepping only
 function heroIntro() {
   if (RECORD || REDUCED) return;
   gsap.from('.hero .h-stack span, .hero .label, .hero .role-line, .hero .statement, .hero .support, .hero .loc, .hero .cta, .scroll-cue', { opacity: 0, y: 40, duration: 1.2, stagger: 0.08, ease: 'power3.out', delay: 0.15 });
@@ -566,14 +579,15 @@ function heroIntro() {
 
 /* ------------------------------------------------------------------ frame */
 const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-if (!RECORD && !REDUCED && !LOW) addEventListener('pointermove', (e) => { mouse.tx = (e.clientX / innerWidth - 0.5); mouse.ty = (e.clientY / innerHeight - 0.5); });
-const tmp = new THREE.Vector3();
+if (!RECORD && !REDUCED && !LOW) addEventListener('pointermove', (e) => { mouse.tx = (e.clientX / innerWidth - 0.5); mouse.ty = (e.clientY / innerHeight - 0.5); lastActive = performance.now(); }, { passive: true });
+const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+let lastActive = 0;
 let htmlDark = null;
 
 function apply(t) {
   mouse.x += (mouse.tx - mouse.x) * 0.05; mouse.y += (mouse.ty - mouse.y) * 0.05;
   const idle = REDUCED ? 0 : 1;
-  updateReveals();
+  if (RECORD) updateReveals();
   // device pose
   device.position.set(S.x + mouse.x * 0.25, S.y - mouse.y * 0.15, S.z);
   device.rotation.set(S.rx + mouse.y * 0.12, S.ry + mouse.x * 0.3, S.rz);
@@ -610,14 +624,16 @@ function apply(t) {
   shadow.scale.set(4.4 * k, 0.7 * k, 1);
   shadow.material.opacity = 0.32 * (1 - S.dark) * (1 - S.away);
 
-  rings.forEach((r, i) => {
+  for (let i = 0; i < rings.length; i++) {
+    const r = rings[i];
+    r.visible = S.rings > 0.003;
+    if (!r.visible) continue;
     const ph = ((t * 0.16 + i / rings.length) % 1);
     r.position.set(tmp.x, tmp.y + 2.6 - ph * 5.2, tmp.z);
     r.rotation.set(Math.PI / 2 - 0.32, 0, 0);
     r.scale.setScalar(k * (0.85 + ph * 0.45));
     r.material.opacity = S.rings * Math.pow(Math.sin(ph * Math.PI), 1.5) * 0.9;
-    r.visible = r.material.opacity > 0.003;
-  });
+  }
   halo.position.set(tmp.x, tmp.y, tmp.z - 1.4);
   halo.scale.setScalar(k * 0.8);
   haloMat.uniforms.uOpacity.value = S.halo; haloMat.uniforms.uTime.value = t; halo.visible = S.halo > 0.003;
@@ -631,7 +647,7 @@ function apply(t) {
   // background + lighting
   bgMat.uniforms.uDarkMix.value = S.dark; bgMat.uniforms.uVioletMix.value = S.violet;
   camera.updateMatrixWorld();
-  bgMat.uniforms.uBeamX.value = tmp.clone().project(camera).x * 0.5 + 0.5;
+  bgMat.uniforms.uBeamX.value = tmp2.copy(tmp).project(camera).x * 0.5 + 0.5;
   rim.intensity = 0.6 + 3.4 * S.dark; rim2.intensity = 2.2 * S.dark;
   key.intensity = 1.6 - 0.6 * S.dark;
   scene.environmentIntensity = 0.7 - 0.25 * S.dark;
@@ -640,27 +656,44 @@ function apply(t) {
   if (d !== htmlDark) { htmlDark = d; document.documentElement.style.background = d ? '#151515' : '#EAE6E1'; }
 }
 
-function render() { if (composer) composer.render(); else renderer.render(scene, camera); }
+function render() {
+  if (composer && S.dark > 0.02) composer.render();   // bloom only matters on dark backgrounds
+  else renderer.render(scene, camera);
+}
 
-/* adaptive quality: hold ~60fps on weaker GPUs */
-let frames = 0, acc = 0, lastNow = performance.now(), degrade = 0;
-function adapt(now) {
-  const dt = now - lastNow; lastNow = now;
-  if (dt > 200) return; frames++; acc += dt;
+/* adaptive quality: hold ~60fps on weaker GPUs (measured on rendered frames only) */
+let frames = 0, acc = 0, degrade = params.has('hq') ? 2 : 0; // ?hq: keep full quality (QA comparisons)
+function adapt(dt) {
+  if (degrade >= 2 || dt > 200 || dt < 1) return; frames++; acc += dt;
   if (frames < 90) return;
   const avg = acc / frames; frames = 0; acc = 0;
-  if (avg > 21 && degrade < 2) {
+  if (avg > 24 && degrade < 2) {
     degrade++;
     if (degrade === 1) { pixelRatio = Math.max(1, pixelRatio * 0.75); resize(); }
     else if (composer) { composer = null; bloom = null; }
   }
 }
 
+/* render on demand: full rate while scrolling / pointer moving / easing, ~30fps for idle ambient motion,
+   nothing while the tab or canvas is hidden. Runs on gsap.ticker, so there is a single rAF loop. */
 const clock = new THREE.Clock();
-function tick(now) {
-  const t = REDUCED ? 0 : clock.getElapsedTime();
-  apply(t); render(); adapt(now);
+let lastY = -1, lastW2 = 0, frameNo = 0, canvasVisible = true, needsRender = true, lastTick = 0, prevRendered = false;
+function tick() {
+  if (document.hidden || !canvasVisible) { prevRendered = false; return; }
+  frameNo++;
+  const now = performance.now(), tickDt = now - lastTick; lastTick = now;
+  const y = scrollY;
+  if (y !== lastY || innerWidth !== lastW2) { lastY = y; lastW2 = innerWidth; lastActive = now; updateSection(); }
+  const easingMouse = Math.abs(mouse.tx - mouse.x) + Math.abs(mouse.ty - mouse.y) > 0.0005;
+  const active = needsRender || easingMouse || now - lastActive < 400;
+  if (!active && (frameNo & 1)) { prevRendered = false; return; } // idle: every other frame
+  needsRender = false;
+  apply(clock.getElapsedTime()); render();
+  if (prevRendered) adapt(tickDt); // only consecutive rendered frames say anything about GPU load
+  prevRendered = true;
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) needsRender = true; });
+if ('IntersectionObserver' in window) new IntersectionObserver((en) => { canvasVisible = en[0].isIntersecting; needsRender = true; }).observe(canvas);
 
 function resize() {
   renderer.setPixelRatio(pixelRatio);
@@ -669,7 +702,8 @@ function resize() {
   camera.fov = isMobile() ? 42 : 35;
   camera.updateProjectionMatrix();
   pMat.uniforms.uPR.value = pixelRatio;
-  if (composer) { composer.setPixelRatio(pixelRatio); composer.setSize(innerWidth, innerHeight); }
+  if (composer) { composer.setPixelRatio(pixelRatio); composer.setSize(innerWidth, innerHeight); setFxaa(); }
+  needsRender = true;
 }
 let rzT; let lastW = innerWidth;
 addEventListener('resize', () => {
@@ -757,6 +791,11 @@ async function boot() {
   lastH = document.documentElement.scrollHeight;
   if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(document.getElementById('main'));
   document.querySelectorAll('details').forEach((d) => d.addEventListener('toggle', relayout));
+  // flow-arrow dash animations only run while their row is on screen
+  if ('IntersectionObserver' in window && !REDUCED) {
+    const io = new IntersectionObserver((en) => en.forEach((x) => x.target.classList.toggle('run', x.isIntersecting)), { rootMargin: '0px 0px -5% 0px' });
+    document.querySelectorAll('.flow').forEach((f) => io.observe(f));
+  }
   if (RECORD) {
     // deterministic stepping for capture: set scroll + time, render one frame
     window.__frame = (y, t) => {
@@ -783,11 +822,11 @@ async function boot() {
     // no idle animation: render only when the scroll position changes
     const draw = () => { apply(0); render(); };
     ScrollTrigger.addEventListener('refresh', draw);
-    addEventListener('scroll', () => requestAnimationFrame(draw), { passive: true });
-    addEventListener('resize', draw);
+    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: draw });
+    addEventListener('resize', draw, { passive: true });
     draw();
   } else {
-    renderer.setAnimationLoop(tick);
+    gsap.ticker.add(tick);
   }
   document.documentElement.classList.add('ready');
   window.__ready = true;
