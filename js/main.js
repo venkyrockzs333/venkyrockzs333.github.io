@@ -5,12 +5,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 const { gsap, ScrollTrigger, Lenis } = window;
 gsap.registerPlugin(ScrollTrigger);
@@ -48,9 +42,25 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 1.0;
 
-/* post-processing (desktop only) */
+/* post-processing (desktop only, loaded on demand) */
 let composer = null, bloom = null, fxaa = null;
-function setupComposer() {
+function setFxaa() { if (fxaa) fxaa.material.uniforms.resolution.value.set(1 / (innerWidth * pixelRatio), 1 / (innerHeight * pixelRatio)); }
+async function setupComposer() {
+  const [
+    { EffectComposer },
+    { RenderPass },
+    { UnrealBloomPass },
+    { OutputPass },
+    { ShaderPass },
+    { FXAAShader },
+  ] = await Promise.all([
+    import('three/addons/postprocessing/EffectComposer.js'),
+    import('three/addons/postprocessing/RenderPass.js'),
+    import('three/addons/postprocessing/UnrealBloomPass.js'),
+    import('three/addons/postprocessing/OutputPass.js'),
+    import('three/addons/postprocessing/ShaderPass.js'),
+    import('three/addons/shaders/FXAAShader.js'),
+  ]);
   const rt = new THREE.WebGLRenderTarget(innerWidth * pixelRatio, innerHeight * pixelRatio, {
     type: THREE.HalfFloatType, samples: 0, // no MSAA on the HDR target: FXAA at the end is far cheaper
   });
@@ -59,13 +69,11 @@ function setupComposer() {
   composer.setSize(innerWidth, innerHeight);
   composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.3, 0.5, 0.9);
-  // UnrealBloom renders its blur chain from half resolution; it is skipped entirely on light sections and on mobile/tablet
+  // UnrealBloom renders its blur chain from half resolution; skipped on light sections and on mobile/tablet
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
   fxaa = new ShaderPass(FXAAShader); composer.addPass(fxaa); setFxaa();
 }
-function setFxaa() { if (fxaa) fxaa.material.uniforms.resolution.value.set(1 / (innerWidth * pixelRatio), 1 / (innerHeight * pixelRatio)); }
-if (!LOW) setupComposer();
 
 /* ------------------------------------------------------------------ helpers */
 function canvasTex(w, h, draw) {
@@ -497,8 +505,8 @@ function updateSection() {
 
 /* ------------------------------------------------------------------ scroll */
 let lenis = null;
-if (!REDUCED && !RECORD) {
-  // responsive, not floaty; phones keep native touch scrolling (syncTouch false)
+if (!REDUCED && !RECORD && !LOW) {
+  // desktop only: responsive, not floaty. Phones/tablets keep native scroll (no Lenis ticker load).
   lenis = new Lenis({ lerp: 0.11, smoothWheel: true, wheelMultiplier: 1, syncTouch: false, autoRaf: false });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000)); // the only rAF loop on the page is gsap.ticker
@@ -674,8 +682,9 @@ function adapt(dt) {
   }
 }
 
-/* render on demand: full rate while scrolling / pointer moving / easing, ~30fps for idle ambient motion,
-   nothing while the tab or canvas is hidden. Runs on gsap.ticker, so there is a single rAF loop. */
+/* render on demand: full rate while scrolling / pointer moving / easing.
+   No idle ambient WebGL frames (they crush Lighthouse TBT). Tab/canvas hidden = no work.
+   Runs on gsap.ticker so Lenis + scene share one rAF loop. */
 const clock = new THREE.Clock();
 let lastY = -1, lastW2 = 0, frameNo = 0, canvasVisible = true, needsRender = true, lastTick = 0, prevRendered = false;
 function tick() {
@@ -686,7 +695,7 @@ function tick() {
   if (y !== lastY || innerWidth !== lastW2) { lastY = y; lastW2 = innerWidth; lastActive = now; updateSection(); }
   const easingMouse = Math.abs(mouse.tx - mouse.x) + Math.abs(mouse.ty - mouse.y) > 0.0005;
   const active = needsRender || easingMouse || now - lastActive < 400;
-  if (!active && (frameNo & 1)) { prevRendered = false; return; } // idle: every other frame
+  if (!active) { prevRendered = false; return; } // no idle ambient WebGL
   needsRender = false;
   apply(clock.getElapsedTime()); render();
   if (prevRendered) adapt(tickDt); // only consecutive rendered frames say anything about GPU load
@@ -781,6 +790,7 @@ function relayout() {
 /* ------------------------------------------------------------------ boot */
 async function boot() {
   try { await document.fonts.ready; } catch (e) { /* ignore */ }
+  if (!LOW && !RECORD) { try { await setupComposer(); } catch (e) { composer = null; bloom = null; fxaa = null; } }
   experience();
   resize();
   buildTimeline();
@@ -821,6 +831,13 @@ async function boot() {
   } else if (REDUCED) {
     // no idle animation: render only when the scroll position changes
     const draw = () => { apply(0); render(); };
+    ScrollTrigger.addEventListener('refresh', draw);
+    ScrollTrigger.create({ start: 0, end: 'max', onUpdate: draw });
+    addEventListener('resize', draw, { passive: true });
+    draw();
+  } else if (LOW) {
+    // phones/tablets: scroll-linked poses only, no continuous WebGL ticker load
+    const draw = () => { apply(clock.getElapsedTime()); render(); };
     ScrollTrigger.addEventListener('refresh', draw);
     ScrollTrigger.create({ start: 0, end: 'max', onUpdate: draw });
     addEventListener('resize', draw, { passive: true });
