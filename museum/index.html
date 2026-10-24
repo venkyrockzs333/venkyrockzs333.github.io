@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content" />
+<meta name="theme-color" content="#000000" />
+<link rel="icon" href="data:," />
+<title>Our Museum</title>
+  <script type="module" crossorigin src="./assets/index-a0KfaOfl.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-g9Xl9ZxQ.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<section id="start" class="screen">
+  <div class="start-inner">
+    <h1 id="title">Our Museum</h1>
+    <p id="fromto" class="fromto"></p>
+    <button id="startBtn" class="gold" disabled>Start</button>
+    <div class="loadwrap"><div class="loadbar"><i id="loadfill"></i></div><span id="loadtxt">Loading 0%</span></div>
+  </div>
+</section>
+
+<div id="hud" class="hidden">
+  <div id="hint-top" class="toast"></div>
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div class="actions">
+    <button id="danceBtn" class="pill hidden">💃 Dance with me</button>
+    <button id="sitBtn" class="pill hidden">🪑 Sit together</button>
+    <button id="musicBtn" class="round hidden" aria-label="Music">♪</button>
+  </div>
+  <div id="bubbles"></div>
+</div>
+
+<section id="lock" class="modal hidden" role="dialog" aria-modal="true">
+  <form id="lockCard" class="card" autocomplete="off">
+    <div class="lockicon" id="lockIcon">
+      <svg viewBox="0 0 64 64" width="56" height="56"><path id="shackle" d="M20 30V22a12 12 0 0 1 24 0v8" fill="none" stroke="#e6c27a" stroke-width="4" stroke-linecap="round"/><rect x="14" y="30" width="36" height="26" rx="6" fill="#e6c27a"/><path d="M32 49c-6-4-9-7-9-10a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1c0 3-3 6-9 10z" fill="#3a2a10"/></svg>
+    </div>
+    <p class="eyebrow">THE DOOR IS LOCKED</p>
+    <h2>Enter the secret code</h2>
+    <input id="code" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" maxlength="12" aria-label="Secret code" placeholder="• • • •" />
+    <p id="hintTxt" class="hint" aria-live="polite"></p>
+    <div class="row"><button type="button" id="lockCancel" class="ghost">Not yet</button><button type="submit" class="gold">Unlock</button></div>
+  </form>
+</section>
+
+<section id="viewer" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="viewer-inner">
+    <span class="pill-badge">● Viewing</span>
+    <div id="viewerBody"></div>
+    <button id="viewerClose" class="gold">Close</button>
+  </div>
+</section>
+
+<div id="glerr" class="screen hidden"><div class="start-inner"><h2>Taking a breath…</h2><p class="fromto">The graphics paused. Tap to continue.</p><button class="gold" onclick="location.reload()">Reload</button></div></div>
+<div id="flash"></div>
+</body>
+</html>
