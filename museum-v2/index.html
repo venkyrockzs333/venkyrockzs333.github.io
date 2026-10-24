@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<meta name="theme-color" content="#07060a" />
+<link rel="icon" href="data:," />
+<title>Our Museum</title>
+  <script type="module" crossorigin src="./assets/index-Bizb25GJ.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/three-CwgkLlCk.js">
+  <link rel="modulepreload" crossorigin href="./assets/three-addons-YY_iq5vV.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-DjA31Hzr.css">
+</head>
+<body>
+<canvas id="c" aria-label="3D museum"></canvas>
+<div id="touch" class="hidden"></div>
+
+<section id="intro" class="screen">
+  <div class="intro-inner">
+    <p class="eyebrow">A PRIVATE EXHIBITION</p>
+    <h1 id="title">Our Museum</h1>
+    <p id="fromto" class="fromto"></p>
+    <div class="loadwrap"><div class="loadbar"><i id="loadfill"></i></div><span id="loadtxt">Loading 0%</span></div>
+    <button id="enterBtn" class="gold" disabled>Enter</button>
+    <p id="loaderr" class="err hidden"></p>
+    <p class="sub">Best with sound · headphones welcome</p>
+  </div>
+</section>
+
+<div id="hud" class="hidden">
+  <div id="toast" class="toast"></div>
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="joyHint" class="ghosthint">Move here</div>
+  <div class="topbar">
+    <button id="muteBtn" class="round" aria-label="Mute">♪</button>
+    <button id="setBtn" class="round" aria-label="Settings">⚙</button>
+  </div>
+  <div class="actions">
+    <button id="useBtn" class="pill hidden"></button>
+    <button id="sitBtn" class="pill hidden">Sit together</button>
+    <button id="danceBtn" class="pill hidden">Dance with me</button>
+  </div>
+  <button id="skipBtn" class="pill skip hidden">Skip ›</button>
+  <div id="bubbles"></div>
+</div>
+
+<section id="settings" class="modal hidden" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="card">
+    <h2>Comfort</h2>
+    <label class="row2"><span>Reduced camera motion</span><input type="checkbox" id="optReduced" /></label>
+    <label class="row2"><span>Look sensitivity</span><input type="range" id="optSens" min="0.4" max="2" step="0.1" value="1" /></label>
+    <label class="row2"><span>Show FPS meter</span><input type="checkbox" id="optFps" /></label>
+    <p class="small" id="qinfo"></p>
+    <button id="setClose" class="gold">Done</button>
+  </div>
+</section>
+
+<section id="lock" class="modal hidden" role="dialog" aria-modal="true">
+  <form id="lockCard" class="card" autocomplete="off">
+    <div class="lockicon">
+      <svg viewBox="0 0 64 64" width="56" height="56"><path id="shackle" d="M20 30V22a12 12 0 0 1 24 0v8" fill="none" stroke="#e6c27a" stroke-width="4" stroke-linecap="round"/><rect x="14" y="30" width="36" height="26" rx="6" fill="#e6c27a"/><path d="M32 49c-6-4-9-7-9-10a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1c0 3-3 6-9 10z" fill="#3a2a10"/></svg>
+    </div>
+    <p class="eyebrow">THE DOOR IS LOCKED</p>
+    <h2>Enter the secret code</h2>
+    <input id="code" inputmode="numeric" enterkeyhint="go" autocomplete="off" maxlength="16" aria-label="Secret code" placeholder="• • • •" />
+    <p id="hintTxt" class="hint" aria-live="polite"></p>
+    <div class="row"><button type="button" id="lockCancel" class="ghost">Not yet</button><button type="submit" class="gold">Unlock</button></div>
+  </form>
+</section>
+
+<section id="viewer" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="viewer-inner">
+    <div id="viewerBody"></div>
+    <button id="viewerClose" class="gold">Back to the museum</button>
+  </div>
+</section>
+
+<div id="glerr" class="screen hidden"><div class="intro-inner"><h2>Graphics paused</h2><p class="fromto" id="glmsg">The phone paused 3D graphics. It usually comes back by itself.</p><button class="gold" onclick="location.reload()">Reload</button></div></div>
+<div id="flash"></div>
+<pre id="fps" class="hidden"></pre>
+</body>
+</html>
